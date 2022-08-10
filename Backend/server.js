@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 //db connection
 const connectDb = async () => {
-  await mongoose.connect('mongodb+srv://anudeep1:anudeep@jsm.pnfyuat.mongodb.net/?retryWrites=true&w=majority');
+  await mongoose.connect(process.env.MONGO_CONNECTION_URL);
 };
 connectDb()
 
