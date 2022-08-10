@@ -7,7 +7,7 @@ const router = express.Router()
 router.post("/",signUp)
 router.post("/sign-in",signIn)
 router.get("/dashboard",verify,(req,res) => {
-    console.log("Protected route")
+    console.log(req.user)
 })
 
 module.exports =  router;
