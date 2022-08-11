@@ -193,3 +193,37 @@ background-color: white;
   
   
   
+.error{
+    margin-top: -50px;
+    margin-left: -35px;
+    /* color: green; */
+    background-color: #bf2727;
+    width: 467px;
+}
+.reg-bt{
+    margin-top: 800px;
+    position: relative;
+    width: 400px;
+    margin-left: 270px;
+    background: inherit;
+    color: white;
+    border: none;
+}
+.reg-bt:hover{
+    background: white;
+    color: black;
+}
+.log-bt{
+    margin-top: 740px;
+    position: relative;
+    width: 400px;
+    margin-left: 270px;
+    background: inherit;
+    color: whitesmoke;
+    border: none;
+
+}
+.log-bt:hover{
+    background: white;
+    color: black;
+}

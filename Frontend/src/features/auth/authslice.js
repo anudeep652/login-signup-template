@@ -25,11 +25,23 @@ export const register = createAsyncThunk(
           error.response.data.message) ||
         error.message ||
         error.toString();
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(error.response.data.error);
     }
   }
 );
 
+export const googleAuth = createAsyncThunk('/auth/googleAuth',async (user,thunkAPI) => {
+  try{
+    return await authService.googleAuth(user);
+
+  }catch(error){
+    const message =
+      (error.response && error.response.data && error.response.data.message) ||
+      error.message ||
+      error.toString()
+    return thunkAPI.rejectWithValue(error.response.data.error)
+  }
+})
 
 export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
   try {
@@ -37,12 +49,16 @@ export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
 
   } catch (error) {
     const message =
-      (error.response && error.response.data && error.response.data.message) ||
-      error.message ||
-      error.toString()
-    return thunkAPI.rejectWithValue(message)
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(error.response.data);
   }
 })
+
+
 export const logout = createAsyncThunk('auth/logout', async () => {
   await authService.logout()
 })
@@ -83,6 +99,20 @@ const authSlice = createSlice({
       state.user = action.payload
     })
     .addCase(login.rejected, (state, action) => {
+      state.isLoading = false
+      state.isError = true
+      state.message = action.payload
+      state.user = null
+    })
+    .addCase(googleAuth.pending, (state) => {
+      state.isLoading = true
+    })
+    .addCase(googleAuth.fulfilled, (state, action) => {
+      state.isLoading = false
+      state.isSuccess = true
+      state.user = action.payload
+    })
+    .addCase(googleAuth.rejected, (state, action) => {
       state.isLoading = false
       state.isError = true
       state.message = action.payload

@@ -3,8 +3,12 @@ import "./styles.css";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import Button from "@mui/material/Button";
 import { useDispatch, useSelector } from "react-redux";
-import { login, register, reset } from "../features/auth/authslice";
+import { login, register, reset,googleAuth } from "../features/auth/authslice";
 import { useNavigate } from "react-router-dom";
+import Alert from "@mui/material/Alert";
+import { GoogleLogin } from 'react-google-login';
+import { gapi } from "gapi-script"
+
 
 function Auth() {
   const navigate = useNavigate();
@@ -13,37 +17,82 @@ function Auth() {
     email: "",
     password: "",
   });
-  const [signUp, setIsSignUp] = useState(false);
+  // let [error, setError] = useState("");
+  const [signUp, setIsSignUp] = useState(true);
   const dispatch = useDispatch();
-  const { isSuccess } = useSelector(
-    (state) => state.auth
-  );
+  let { isSuccess, user, isError,message } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if(isSuccess){
-      navigate("/auth/dashboard");
-
+    function start() {
+      gapi.client.init({
+        clientId: '320690073749-24oe8tofu54ep0cbelvq8of8uvsjcnhi.apps.googleusercontent.com',
+        scope: 'email',
+      });
     }
-    
 
-    
-  }, [isSuccess]);
+    gapi.load('client:auth2', start);
+  }, []);
+
+  useEffect(() => {
+    if (isSuccess || user) {
+      navigate("/user/dashboard");
+    }
+    if (signUp) {
+      if (formData.email && formData.password) {
+        message="";
+      }
+    } else {
+      if (formData.email && formData.password) {
+        message="";
+      }
+    }
+  }, [isSuccess, navigate, user, isError, signUp, formData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (signUp) {
+      if (formData.name && formData.email && formData.password) {
+        dispatch(register(formData));
+      }
+      message="please fll all the fields"
+    }if(!signUp){
+
+      if (formData.email && formData.password) {
+        dispatch(login(formData));
+      } else {
+        message="please fill all the fields"
+      }
+    }
+    dispatch(reset());
     setFormData({
       name: "",
       email: "",
       password: "",
     });
-    if (signUp) {
-      dispatch(register(formData));
-    }
-    dispatch(login(formData));
+
   };
 
   const Toggle = () => {
     setIsSignUp((prev) => !prev);
+    message="";
+    dispatch(reset());
+  };
+
+  const googleError = (error) => console.log('Google Sign In was unsuccessful. Try again later');
+
+  const googleSuccess = async (res) => {
+    const result = await res?.profileObj;
+    const token = await res?.tokenId;
+    console.log(token);
+
+    try {
+      dispatch(googleAuth(result))
+      
+
+      navigate('/user/dashboard');
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -57,6 +106,13 @@ function Auth() {
         onSubmit={handleSubmit}
         className={signUp ? "signup" : "login"}
       >
+        {message && (
+          <div className="error">
+            <Alert variant="filled" severity="error">
+              {message}
+            </Alert>
+          </div>
+        )}
         <h3>{signUp ? "Register " : "Login "}here </h3>
 
         {signUp && (
@@ -101,18 +157,32 @@ function Auth() {
 
         <button type="submit">{signUp ? "Sign  Up " : "Login "}</button>
         <div className="social">
-          <button type="button" className="login-with-google-btn">
+          {/* <button type="button" className="login-with-google-btn">
+            Continue with Google
+          </button> */}
+          <GoogleLogin
+            clientId="320690073749-24oe8tofu54ep0cbelvq8of8uvsjcnhi.apps.googleusercontent.com"
+            render={(renderProps) => (
+              <button type="button" onClick={renderProps.onClick} disabled={renderProps.disabled} className="login-with-google-btn">
             Continue with Google
           </button>
+            )}
+            onSuccess={ googleSuccess}
+            onFailure={ googleError}
+            cookiePolicy={'single_host_origin'}
+            // isSignedIn={true}
+          />
         </div>
-        <button className="bt-button" onClick={Toggle}>
-          {signUp
-            ? "already have an account?Log In"
-            : "Don't have an account? SignUp"}
-        </button>
       </form>
+      <button className={signUp ? "reg-bt" : "log-bt"} onClick={Toggle}>
+        {signUp
+          ? "already have an account?Log In"
+          : "Don't have an account? SignUp"}
+      </button>
     </>
   );
 }
 
 export default Auth;
+
+

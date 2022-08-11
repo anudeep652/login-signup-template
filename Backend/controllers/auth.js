@@ -1,16 +1,19 @@
 const User = require("../modals/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const findOrCreate = require('mongoose-findorcreate')
 
 
 //register a new user
 const signUp = async (req, res) => {
   const { name, email, password } = req.body;
 
-  const user = await User.findOne({ email });
+  if(!name || !email || !password) return res.status(400).send("Please fill all the fields");
 
   //Check if the user already exists
-  if (user) return res.status(400).send("Email already exists");
+  const user = await User.findOne({ email });
+
+  if (user) return res.status(400).json({error:"Email already exists"});
 
   //hashing passwords
   const salt = await bcrypt.genSalt(10);
@@ -49,7 +52,7 @@ const signIn = async (req, res) => {
 
   if (!isMatch) return res.status(400).send("Invalid Password");
 
-  //generate a jwr token
+  //generate a jwt token
   const token = jwt.sign(
     { name: user.name, email: user.email, _id: user._id },
     process.env.JWT_SECRET,
@@ -61,7 +64,26 @@ const signIn = async (req, res) => {
   res.status(200).json({ name:user.name,email, token });
 };
 
+const googleAuth = async (req, res) => {
+
+  const user = req.body;
+  console.log(user)
+  await User.findOrCreate({email:user.email},(err,result) =>{
+    if(err) return res.status(500).send(err);
+
+    //generate a jwt token
+   const token = jwt.sign(
+    { name: user.name, email: user.email, _id: user._id },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "10d",
+    })
+    res.status(200).json({name:user.name,email:user.email,token});
+  })
+}
+
 module.exports = {
   signUp,
   signIn,
+  googleAuth
 };
